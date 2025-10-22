@@ -8,7 +8,7 @@ from typing import Any, Dict, List, Optional, Union
 from abc import ABC, abstractmethod
 
 from mcp.server import Server
-from mcp.server.models import InitializationOptions
+from mcp.server.models import InitializationOptions, ServerCapabilities
 from mcp.server.stdio import stdio_server
 from mcp.types import (
     CallToolRequest,
@@ -16,7 +16,8 @@ from mcp.types import (
     ListToolsRequest,
     ListToolsResult,
     Tool,
-    TextContent
+    TextContent,
+    ToolsCapability
 )
 
 logger = logging.getLogger(__name__)
@@ -157,9 +158,8 @@ class MCPServer:
                 InitializationOptions(
                     server_name=self.name,
                     server_version=self.version,
-                    capabilities=self.server.get_capabilities(
-                        notification_options=None,
-                        experimental_capabilities={}
+                    capabilities=ServerCapabilities(
+                        tools=ToolsCapability()
                     )
                 )
             )

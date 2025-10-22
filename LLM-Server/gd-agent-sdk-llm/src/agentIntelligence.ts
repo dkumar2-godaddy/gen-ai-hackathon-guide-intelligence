@@ -1,6 +1,6 @@
 import { GDAgent } from '@godaddy/agent-sdk';
 import { setTracingDisabled, run } from "@openai/agents";
-import { teamFullDaySummaryPrompt, agentSpecificSummaryPrompt } from './prompts/agent-intelligence-prompts';
+import {  agentSpecificSummaryPrompt } from './prompts/agent-intelligence-prompts.js';
 
 setTracingDisabled(true);
 
