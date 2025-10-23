@@ -88,7 +88,7 @@ def register_tools(mcp: FastMCP) -> None:
 
 async def main():
     """Main entry point"""
-    parser = argparse.ArgumentParser(description="Conversation State Service FastMCP Server")
+    parser = argparse.ArgumentParser(description="Conversation State Service FastMCP Server (HTTP)")
     parser.add_argument(
         "--name",
         default="Conversation State Service MCP Server",
@@ -100,10 +100,17 @@ async def main():
         default="INFO",
         help="Logging level (default: INFO)",
     )
+    # Always run over HTTP
     parser.add_argument(
-        "--stdio",
-        action="store_true",
-        help="Use stdio transport (FastMCP defaults to stdio)",
+        "--host",
+        default="127.0.0.1",
+        help="HTTP host to bind (default: 127.0.0.1)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="HTTP port to bind (default: 8000)",
     )
 
     args = parser.parse_args()
@@ -117,11 +124,11 @@ async def main():
     register_tools(mcp)
 
     logger.info(f"Starting {args.name} (FastMCP)")
-    logger.info("Transport: stdio")
+    logger.info("Transport: HTTP")
 
     try:
-        # FastMCP typically runs over stdio by default
-        mcp.run()
+        # Always run over HTTP (streaming)
+        mcp.run(transport="http", host=args.host, port=args.port)
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
     except Exception as e:
