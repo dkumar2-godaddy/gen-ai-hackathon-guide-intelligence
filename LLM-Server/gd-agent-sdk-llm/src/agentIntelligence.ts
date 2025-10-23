@@ -19,5 +19,5 @@ const agent = new GDAgent({
 // const result = await run(agent, teamFullDaySummaryPrompt);
 // console.log(result.finalOutput);
 
-const result2 = await run(agent, agentSpecificSummaryPrompt);
-console.log(result2.finalOutput);
+// const result2 = await run(agent, agentSpecificSummaryPrompt);
+// console.log(result2.finalOutput);

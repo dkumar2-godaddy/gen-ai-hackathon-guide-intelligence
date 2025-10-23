@@ -1,7 +1,3 @@
-/**
- * Agent Intelligence Analyzer with Autonomous LLM Orchestration
- * The LLM autonomously orchestrates the entire workflow using MCP tools
- */
 import { GDAgent } from '@godaddy/agent-sdk';
 import { MCPServerStreamableHttp, run, setTracingDisabled } from "@openai/agents";
 
@@ -307,6 +303,7 @@ export class AgentIntelligenceAnalyzer {
   private parseAnalysisResult(result: string): TeamSummary {
     // Parse the LLM's structured output to match the new JSON schema format
     try {
+      console.log("\n \n  results in parseAnalysisResult: ", result);
       // Attempt to extract JSON if the LLM returns it
       const jsonMatch = result.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -400,52 +397,52 @@ export class AgentIntelligenceAnalyzer {
   }
 }
 
-// TEST_RUN:
-const analyzer = new AgentIntelligenceAnalyzer();
-await analyzer.initialize();
-const result = await analyzer.generateTeamFullDaySummary({
-  contactCenterId: 'gd-dev-us-001',
-  startDate: '2025-10-17 00:00',
-  endDate: '2025-10-17 23:59'
-});
-
-console.log('\n📊 TEAM FULL DAY SUMMARY RESULTS:');
-console.log('=====================================');
-console.log(JSON.stringify(result, null, 2));
-console.log('\n📈 SUMMARY STATISTICS:');
-console.log(`Total Agents: ${result.agentsSummary.length}`);
-if (result.agentsSummary.length > 0) {
-  const avgScore = result.agentsSummary.reduce((sum, agent) => sum + agent.overallPerformanceScore, 0) / result.agentsSummary.length;
-  const totalInteractions = result.agentsSummary.reduce((sum, agent) => sum + agent.performanceStats.totalInteractions, 0);
-  const totalDuration = result.agentsSummary.reduce((sum, agent) => sum + agent.performanceStats.totalDurationSeconds, 0);
-  
-  console.log(`Average Performance Score: ${avgScore.toFixed(2)}`);
-  console.log(`Total Interactions: ${totalInteractions}`);
-  console.log(`Total Duration: ${Math.round(totalDuration / 3600 * 100) / 100} hours`);
-  
-  console.log('\n🏆 TOP PERFORMERS:');
-  result.agentsSummary
-    .sort((a, b) => b.overallPerformanceScore - a.overallPerformanceScore)
-    .slice(0, 3)
-    .forEach((agent, index) => {
-      console.log(`${index + 1}. ${agent.agentName} (${agent.agentId}) - Score: ${agent.overallPerformanceScore}`);
-    });
-}
-console.log('=====================================\n');
-
-await analyzer.cleanup();
-
-// const result = await analyzer.analyzeConversation('b714c328-96fa-42a0-a1e6-d39f97d04f87');
-
+// // TEST_RUN:
 // const analyzer = new AgentIntelligenceAnalyzer();
 // await analyzer.initialize();
-// const result = await analyzer.analyzeAgent({
-//   agentId: 'jkumari1',
+// const result = await analyzer.generateTeamFullDaySummary({
+//   contactCenterId: 'gd-dev-us-001',
 //   startDate: '2025-10-17 00:00',
 //   endDate: '2025-10-17 23:59'
 // });
-// console.log(result);
+
+// console.log('\n📊 TEAM FULL DAY SUMMARY RESULTS:');
+// console.log('=====================================');
+// console.log(JSON.stringify(result, null, 2));
+// console.log('\n📈 SUMMARY STATISTICS:');
+// console.log(`Total Agents: ${result.agentsSummary.length}`);
+// if (result.agentsSummary.length > 0) {
+//   const avgScore = result.agentsSummary.reduce((sum, agent) => sum + agent.overallPerformanceScore, 0) / result.agentsSummary.length;
+//   const totalInteractions = result.agentsSummary.reduce((sum, agent) => sum + agent.performanceStats.totalInteractions, 0);
+//   const totalDuration = result.agentsSummary.reduce((sum, agent) => sum + agent.performanceStats.totalDurationSeconds, 0);
+  
+//   console.log(`Average Performance Score: ${avgScore.toFixed(2)}`);
+//   console.log(`Total Interactions: ${totalInteractions}`);
+//   console.log(`Total Duration: ${Math.round(totalDuration / 3600 * 100) / 100} hours`);
+  
+//   console.log('\n🏆 TOP PERFORMERS:');
+//   result.agentsSummary
+//     .sort((a, b) => b.overallPerformanceScore - a.overallPerformanceScore)
+//     .slice(0, 3)
+//     .forEach((agent, index) => {
+//       console.log(`${index + 1}. ${agent.agentName} (${agent.agentId}) - Score: ${agent.overallPerformanceScore}`);
+//     });
+// }
+// console.log('=====================================\n');
+
 // await analyzer.cleanup();
+
+// // const result = await analyzer.analyzeConversation('b714c328-96fa-42a0-a1e6-d39f97d04f87');
+
+// // const analyzer = new AgentIntelligenceAnalyzer();
+// // await analyzer.initialize();
+// // const result = await analyzer.analyzeAgent({
+// //   agentId: 'jkumari1',
+// //   startDate: '2025-10-17 00:00',
+// //   endDate: '2025-10-17 23:59'
+// // });
+// // console.log(result);
+// // await analyzer.cleanup();
 
 
 
