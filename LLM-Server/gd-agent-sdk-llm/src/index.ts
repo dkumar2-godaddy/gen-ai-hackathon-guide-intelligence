@@ -40,13 +40,14 @@ app.post('/api/agents', async (req: Request, res: Response) => {
 		return res.status(400).json({ error: 'Missing startDate or endDate in request body.' });
 	}
 
-	const analyzer = new AgentIntelligenceAnalyzer();
-	await analyzer.initialize();
-	const result = await analyzer.generateTeamFullDaySummary({
-		contactCenterId:  'gd-dev-us-001',
-		startDate: startDate,
-		endDate: endDate
-	});
+	const result = mockAgents.map(a => [
+		/* agentName */ a.name,
+		/* agentId */ a.id,
+		/* sentimentScore */ a.stats.sentiment,
+		/* numberOfConversations */ a.stats.calls,
+		/* callStatus */ a.chatStatus,
+		/* averageHandlingTime */ a.averageHandlingTime
+	]);
 
 	return res.json(result);
 });
@@ -59,12 +60,13 @@ app.get('/api/agents/:agentId',async (req: Request<{ agentId: string }>, res: Re
 	if (!agent) {
 		return res.status(404).json({ error: 'Agent not found' });
 	}
-	const analyzer = new AgentIntelligenceAnalyzer();
-	await analyzer.initialize();
-	const result = await analyzer.analyzeAgent({
-		agentId:  agentId,
-		startDate: startDate,
-		endDate: endDate
+	return res.json({
+		agentName: agent.name,
+		agentId: agent.id,
+		sentimentScore: agent.stats.sentiment,
+		numberOfConversations: agent.stats.calls,
+		callStatus: agent.chatStatus,
+		averageHandlingTime: agent.averageHandlingTime
 	});
 
 	return res.json(result);
