@@ -1,5 +1,5 @@
-import { sampleConversationState } from "../../data/conversationState";
-import { sampleTranscripts } from "../../data/trascripts";
+import { sampleConversationState } from "../data/conversationState";
+import { sampleTranscripts } from "../data/trascripts";
 
 const TEAM_FULL_DAY_SUMMARY_PROMPT = `
 Below are the responses from a specifc time frame from two seperate APIs. Below responses are from the transcript API:

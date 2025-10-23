@@ -1,6 +1,6 @@
 import { GDAgent } from '@godaddy/agent-sdk';
 import { setTracingDisabled, run } from "@openai/agents";
-import { teamFullDaySummaryPrompt, agentSpecificSummaryPrompt } from './prompts/agent-intelligence-prompts';
+import {  agentSpecificSummaryPrompt } from './prompts/agent-intelligence-prompts.js';
 
 setTracingDisabled(true);
 
@@ -19,5 +19,5 @@ const agent = new GDAgent({
 // const result = await run(agent, teamFullDaySummaryPrompt);
 // console.log(result.finalOutput);
 
-const result2 = await run(agent, agentSpecificSummaryPrompt);
-console.log(result2.finalOutput);
+// const result2 = await run(agent, agentSpecificSummaryPrompt);
+// console.log(result2.finalOutput);

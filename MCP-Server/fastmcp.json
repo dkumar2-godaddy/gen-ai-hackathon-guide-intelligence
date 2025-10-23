@@ -1,0 +1,15 @@
+{
+  "$schema": "https://gofastmcp.com/public/schemas/fastmcp.json/v1.json",
+  "source": {
+    "path": "main.py",
+    "entrypoint": "mcp"
+  },
+  "transport": {
+    "type": "http",
+    "host": "127.0.0.1",
+    "port": 5132
+  },
+  "environment": {
+      "dependencies": ["requests"]
+  }
+}

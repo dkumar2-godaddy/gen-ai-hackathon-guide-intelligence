@@ -1,0 +1,39 @@
+{  
+    "agentsSummary": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "agentId": {
+              "type": "string",
+              "description": "Unique agent identifier"
+            },
+            "agentName": {
+              "type": "string",
+              "description": "Agent's display name"
+            },
+            "performanceStats": {
+              "type": "object",
+              "properties": {
+                "totalInteractions": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "totalDurationSeconds": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": ["totalInteractions", "totalDurationSeconds"]
+            },
+            "overallPerformanceScore": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+              },
+              "required": ["overall"]
+            }
+          },
+          "required": ["agentId", "agentName", "performanceMetrics", "overallPerformanceScore"]
+    }
+  }

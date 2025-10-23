@@ -7,6 +7,9 @@ typing-extensions>=4.8.0
 # HTTP client for API calls
 aiohttp>=3.8.0
 
+# FastMCP runtime
+fastmcp>=0.3.0
+
 # Development and testing (optional)
 pytest>=7.0.0
 pytest-asyncio>=0.21.0

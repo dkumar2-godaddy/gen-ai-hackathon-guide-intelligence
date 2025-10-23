@@ -9,7 +9,7 @@ const SAMPLE_CONVERSATION_STATE = `
             "conversationInfo": {
                 "ucid": "b4a95870-5acb-4e23-a535-49b608e4edd0",
                 "initialContactId": "5320e3d9-e2bd-45e2-bafe-2820f6ab03a0",
-                "contactCenterId": "amazonconnect:gd-dev-us-001",
+                "contactCenterId": "gd-dev-us-001",
                 "contactCenterInstanceId": "c59e72b1-8128-4700-aa34-4458ed45a723",
                 "connectInstanceAlias": "gd-dev-us-001",
                 "customerAuthenticated": true,
@@ -111,7 +111,7 @@ const SAMPLE_CONVERSATION_STATE = `
             "conversationInfo": {
                 "ucid": "3aed2a76-346e-4295-b03b-7dd6cd952276",
                 "initialContactId": "415fe54b-9113-432f-a068-e94ee66f4b15",
-                "contactCenterId": "amazonconnect:gd-dev-us-001",
+                "contactCenterId": "gd-dev-us-001",
                 "contactCenterInstanceId": "c59e72b1-8128-4700-aa34-4458ed45a723",
                 "connectInstanceAlias": "gd-dev-us-001",
                 "customerAuthenticated": true,
@@ -211,7 +211,7 @@ const SAMPLE_CONVERSATION_STATE = `
             "conversationInfo": {
                 "ucid": "72596159-9805-4885-a31c-1e60e9fdcd8f",
                 "initialContactId": "df47b7b8-df39-4e57-bd5b-9037a8659b76",
-                "contactCenterId": "amazonconnect:gd-dev-us-001",
+                "contactCenterId": "gd-dev-us-001",
                 "contactCenterInstanceId": "c59e72b1-8128-4700-aa34-4458ed45a723",
                 "connectInstanceAlias": "gd-dev-us-001",
                 "customerAuthenticated": true,

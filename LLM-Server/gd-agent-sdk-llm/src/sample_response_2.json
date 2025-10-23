@@ -1,0 +1,100 @@
+{
+    "agentAnalytics": {
+          "type": "object",
+          "properties": {
+            "agentId": {
+              "type": "string",
+              "description": "Unique agent identifier"
+            },
+            "agentName": {
+              "type": "string",
+              "description": "Agent's display name"
+            },
+            "performanceStats": {
+              "type": "object",
+              "properties": {
+                "totalInteractions": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "totalDurationSeconds": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "averageResponseTimeSeconds": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "sessionCompletionRate": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Percentage as decimal (0.0 to 1.0)"
+                },
+                "resolutionRate": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1,
+                  "description": "Percentage as decimal (0.0 to 1.0)"
+                },
+                "averageCustomerWaitTimeSeconds": {
+                  "type": "number",
+                  "minimum": 0
+                }
+              },
+              "required": ["totalInteractions", "totalDurationSeconds", "sessionCompletionRate", "resolutionRate"]
+            },
+            "alertFlags": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "flagType": {
+                    "type": "string",
+                    "enum": ["threat", "abuse", "fraud", "escalation_required", "poor_performance", "communication_gap", "premature_disconnect", "no_response"]
+                  },
+                  "severity": {
+                    "type": "string",
+                    "enum": ["critical", "high", "medium", "low"]
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "detectedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                },
+                "required": ["flagType", "severity", "description"]
+              }
+            },
+            "performanceScore": {
+              "type": "object",
+              "properties": {
+                "overall": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "responsiveness": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "customerSatisfaction": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "communicationQuality": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "required": ["overall"]
+            }
+          },
+          "required": ["agentId", "agentName", "performanceMetrics", "alertFlags", "performanceScore"]
+        }
+}

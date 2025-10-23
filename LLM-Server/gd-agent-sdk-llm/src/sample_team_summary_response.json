@@ -1,0 +1,40 @@
+{
+  "agentsSummary": [
+    {
+      "agentId": "agent_001",
+      "agentName": "Sarah Johnson",
+      "performanceStats": {
+        "totalInteractions": 45,
+        "totalDurationSeconds": 7200
+      },
+      "overallPerformanceScore": 92
+    },
+    {
+      "agentId": "agent_002", 
+      "agentName": "Mike Chen",
+      "performanceStats": {
+        "totalInteractions": 38,
+        "totalDurationSeconds": 6100
+      },
+      "overallPerformanceScore": 88
+    },
+    {
+      "agentId": "agent_003",
+      "agentName": "Emily Rodriguez", 
+      "performanceStats": {
+        "totalInteractions": 52,
+        "totalDurationSeconds": 8900
+      },
+      "overallPerformanceScore": 95
+    },
+    {
+      "agentId": "agent_004",
+      "agentName": "David Kim",
+      "performanceStats": {
+        "totalInteractions": 29,
+        "totalDurationSeconds": 4200
+      },
+      "overallPerformanceScore": 76
+    }
+  ]
+}
