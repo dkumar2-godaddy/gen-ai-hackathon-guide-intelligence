@@ -14,14 +14,14 @@ type Agent = {
 	name: string;
 	team: string;
 	stats: { calls: number; sentiment: number };
-	callStatus: 'available' | 'on-call' | 'offline';
+	chatStatus: 'ready' | 'on-call' | 'offline' ;
 	averageHandlingTime: number; // seconds
 };
 
 const mockAgents: Agent[] = [
-	{ id: 'agent-1', name: 'Alice', team: 'North', stats: { calls: 12, sentiment: 0.73 }, callStatus: 'available', averageHandlingTime: 320 },
-	{ id: 'agent-2', name: 'Bob', team: 'West', stats: { calls: 8, sentiment: 0.61 }, callStatus: 'on-call', averageHandlingTime: 410 },
-	{ id: 'agent-3', name: 'Cara', team: 'East', stats: { calls: 15, sentiment: 0.82 }, callStatus: 'offline', averageHandlingTime: 275 }
+	{ id: 'agent-1', name: 'Alice', team: 'North', stats: { calls: 12, sentiment: 0.73 }, chatStatus: 'ready', averageHandlingTime: 320 },
+	{ id: 'agent-2', name: 'Bob', team: 'West', stats: { calls: 8, sentiment: 0.61 }, chatStatus: 'on-call', averageHandlingTime: 410 },
+	{ id: 'agent-3', name: 'Cara', team: 'East', stats: { calls: 15, sentiment: 0.82 }, chatStatus: 'offline', averageHandlingTime: 275 }
 ];
 
 function parseIsoDate(value: unknown): Date | null {
