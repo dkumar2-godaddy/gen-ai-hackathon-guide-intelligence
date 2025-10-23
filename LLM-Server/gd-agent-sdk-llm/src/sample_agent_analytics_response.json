@@ -1,0 +1,34 @@
+{
+  "agentAnalytics": {
+    "agentId": "agent_001",
+    "agentName": "Sarah Johnson",
+    "performanceStats": {
+      "totalInteractions": 45,
+      "totalDurationSeconds": 7200,
+      "averageResponseTimeSeconds": 12.5,
+      "sessionCompletionRate": 0.89,
+      "resolutionRate": 0.82,
+      "averageCustomerWaitTimeSeconds": 8.3
+    },
+    "alertFlags": [
+      {
+        "flagType": "escalation_required",
+        "severity": "medium",
+        "description": "Customer requested supervisor escalation during billing dispute",
+        "detectedAt": "2025-01-15T14:30:00Z"
+      },
+      {
+        "flagType": "communication_gap",
+        "severity": "low",
+        "description": "Brief pause in response during complex technical issue resolution",
+        "detectedAt": "2025-01-15T16:45:00Z"
+      }
+    ],
+    "performanceScore": {
+      "overall": 87,
+      "responsiveness": 92,
+      "customerSatisfaction": 85,
+      "communicationQuality": 88
+    }
+  }
+}

@@ -43,7 +43,7 @@ class CSSTranscriptsTool:
             
             if response.status == 200:
                 data = await response.json()
-                
+                print(f"\n\n CSS Transcripts Tool response: {data}")
                 # Return the API response as-is to match the schema
                 return {
                     "status": data.get("status", "success"),

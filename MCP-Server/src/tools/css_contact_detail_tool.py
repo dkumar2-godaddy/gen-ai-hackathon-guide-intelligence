@@ -28,10 +28,11 @@ class CSSContactDetailTool:
             
             # Build API request parameters
             api_params = {}
-            
+
+            api_params["includeConversations"] = "true"
             # Add optional includeConversations parameter if provided
-            if "includeConversations" in arguments and arguments["includeConversations"] is not None:
-                api_params["includeConversations"] = arguments["includeConversations"]
+            # if "includeConversations" in arguments and arguments["includeConversations"] is not None:
+            #     api_params["includeConversations"] = arguments["includeConversations"]
             
             # Get API configuration
             api_base_url = os.getenv("CONVERSATION_API_BASE_URL", "https://conversation-state-service.care.dev-godaddy.com")
@@ -50,7 +51,8 @@ class CSSContactDetailTool:
             
             if response.status == 200:
                 data = await response.json()
-                
+                print(f"CSS Contact Detail Tool response: {data}")
+
                 # Return the API response as-is to match the schema
                 return {
                     "status": data.get("status", "success"),
