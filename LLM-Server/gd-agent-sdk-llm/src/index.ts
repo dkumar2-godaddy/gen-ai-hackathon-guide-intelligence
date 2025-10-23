@@ -52,20 +52,30 @@ app.post('/api/agents', async (req: Request, res: Response) => {
 });
 
 // GET /api/agents/:agentId -> returns agent specific details
-app.get('/api/agents/:agentId', (req: Request<{ agentId: string }>, res: Response) => {
+app.get('/api/agents/:agentId',async (req: Request<{ agentId: string }>, res: Response) => {
 	const { agentId } = req.params;
+	const { startDate, endDate } = req.body;
 	const agent = mockAgents.find(a => a.id === agentId);
 	if (!agent) {
 		return res.status(404).json({ error: 'Agent not found' });
 	}
-	return res.json({
-		agentName: agent.name,
-		agentId: agent.id,
-		sentimentScore: agent.stats.sentiment,
-		numberOfConversations: agent.stats.calls,
-		callStatus: agent.callStatus,
-		averageHandlingTime: agent.averageHandlingTime
+	const analyzer = new AgentIntelligenceAnalyzer();
+	await analyzer.initialize();
+	const result = await analyzer.analyzeAgent({
+		agentId:  agentId,
+		startDate: startDate,
+		endDate: endDate
 	});
+
+	return res.json(result);
+	// return res.json({
+	// 	agentName: agent.name,
+	// 	agentId: agent.id,
+	// 	sentimentScore: agent.stats.sentiment,
+	// 	numberOfConversations: agent.stats.calls,
+	// 	callStatus: agent.callStatus,
+	// 	averageHandlingTime: agent.averageHandlingTime
+	// });
 });
 
 const server = http.createServer(app);
