@@ -3,12 +3,7 @@
  * The LLM autonomously orchestrates the entire workflow using MCP tools
  */
 import { GDAgent } from '@godaddy/agent-sdk';
-import { run } from "@openai/agents";
-import { setTracingDisabled } from "@openai/agents";
-import { MCPClient } from './utils/mcpClient.js';
-import { MCPToolProvider } from './utils/mcpToolProvider.js';
-import { MCP_CONFIG } from './config/mcpConfig.js';
-import { SentimentAnalyzer } from './utils/sentimentAnalyzer.js';
+import { MCPServerStreamableHttp, run, setTracingDisabled } from "@openai/agents";
 
 setTracingDisabled(true);
 
@@ -37,18 +32,21 @@ export interface TeamSummary {
 
 export class AgentIntelligenceAnalyzer {
   private agent: GDAgent;
-  private mcpClient: MCPClient;
-  private toolProvider: MCPToolProvider;
+  private mcpServer: MCPServerStreamableHttp;
 
   constructor() {
-    this.mcpClient = new MCPClient(MCP_CONFIG.serverPath);
-    this.toolProvider = new MCPToolProvider(this.mcpClient);
+    this.mcpServer = new MCPServerStreamableHttp({
+      url: "http://127.0.0.1:5132/mcp",
+      name: "Conversation State Service MCP Server",
+      // other options if needed
+    });
     
     // Initialize agent without tools first
     this.agent = new GDAgent({
       name: 'Agent Intelligence Analyzer',
       instructions: this.getBaseInstructions(),
       model: 'claude-sonnet-4-20250514',
+      mcpServers: [this.mcpServer],
     });
   }
 
@@ -71,7 +69,7 @@ export class AgentIntelligenceAnalyzer {
       ${this.getBaseInstructions()}
       
       You have access to the following MCP Server tools:
-      ${tools.map(tool => `- ${tool.function.name}: ${tool.function.description}`).join('\n      ')}
+      ${tools.map(tool => `- ${tool.name}: ${tool.description}`).join('\n      ')}
       
       AUTONOMOUS WORKFLOW:
       1. Use conversation_state_search to find conversations in the specified date range
@@ -95,11 +93,11 @@ export class AgentIntelligenceAnalyzer {
   }
 
   async initialize(): Promise<void> {
-    await this.mcpClient.connect();
+    await this.mcpServer.connect();
     
     // Fetch tools from MCP Server and configure the agent
     console.log('🔧 Fetching tools from MCP Server...');
-    const tools = await this.toolProvider.getGDAgentTools();
+    const tools = await this.mcpServer.listTools();
     console.log(`✅ Found ${tools.length} tools from MCP Server`);
     
     // Recreate the agent with tools from MCP Server
@@ -107,7 +105,7 @@ export class AgentIntelligenceAnalyzer {
       name: 'Agent Intelligence Analyzer',
       instructions: this.getEnhancedInstructions(tools),
       model: 'claude-sonnet-4-20250514',
-      tools: tools,
+      mcpServers: [this.mcpServer],
     });
   }
 
@@ -276,6 +274,17 @@ export class AgentIntelligenceAnalyzer {
   }
 
   async cleanup(): Promise<void> {
-    await this.mcpClient.disconnect();
+    await this.mcpServer.close();
   }
 }
+
+// TEST_RUN:
+// const analyzer = new AgentIntelligenceAnalyzer();
+// await analyzer.initialize();
+// const result = await analyzer.generateTeamFullDaySummary({
+//   contactCenterId: 'gd-dev-us-001',
+//   startDate: '2025-10-15 00:00',
+//   endDate: '2025-10-15 23:59'
+// });
+// console.log(result);
+// await analyzer.cleanup();

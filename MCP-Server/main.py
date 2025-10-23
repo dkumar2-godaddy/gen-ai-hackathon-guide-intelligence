@@ -31,7 +31,11 @@ def setup_logging(level: str = "INFO"):
     )
 
 
-def register_tools(mcp: FastMCP) -> None:
+# Create FastMCP server at module level
+mcp = FastMCP("Conversation State Service MCP Server")
+
+
+def register_tools() -> None:
     """Register all Conversation State Service tools as FastMCP tools"""
 
     @mcp.tool
@@ -86,6 +90,10 @@ def register_tools(mcp: FastMCP) -> None:
         return await tool.execute(args)
 
 
+# Register tools at module level
+register_tools()
+
+
 async def main():
     """Main entry point"""
     parser = argparse.ArgumentParser(description="Conversation State Service FastMCP Server (HTTP)")
@@ -118,10 +126,6 @@ async def main():
     # Setup logging
     setup_logging(args.log_level)
     logger = logging.getLogger(__name__)
-
-    # Create FastMCP server and register tools
-    mcp = FastMCP(args.name)
-    register_tools(mcp)
 
     logger.info(f"Starting {args.name} (FastMCP)")
     logger.info("Transport: HTTP")
