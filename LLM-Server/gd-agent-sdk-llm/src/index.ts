@@ -2,26 +2,25 @@
 
 /**
  * Main entry point for Agent Intelligence Analysis
- * Directly uses the analyzer classes
+ * Uses the unified analyzer with autonomous LLM orchestration
  */
 
-import { AutonomousAgentIntelligenceAnalyzer } from './autonomousAgentIntelligenceAnalyzer.js';
 import { AgentIntelligenceAnalyzer } from './agentIntelligenceAnalyzer.js';
 import { MCP_CONFIG } from './config/mcpConfig.js';
+
+// Export the main analyzer class and types
+export { AgentIntelligenceAnalyzer } from './agentIntelligenceAnalyzer.js';
+export type { AgentMetrics, TeamSummary } from './agentIntelligenceAnalyzer.js';
 
 async function main() {
   console.log('🚀 Starting Agent Intelligence Analysis...\n');
   
-  // Choose which analyzer to use
-  const useAutonomous = process.argv.includes('--autonomous');
-  const analyzer = useAutonomous 
-    ? new AutonomousAgentIntelligenceAnalyzer()
-    : new AgentIntelligenceAnalyzer();
+  const analyzer = new AgentIntelligenceAnalyzer();
   
   try {
-    console.log(`📡 Initializing ${useAutonomous ? 'Autonomous' : 'Manual'} Agent...`);
+    console.log('📡 Initializing Autonomous Agent Intelligence Analyzer...');
     await analyzer.initialize();
-    console.log('✅ Agent initialized successfully\n');
+    console.log('✅ Agent initialized successfully with MCP tools\n');
     
     console.log('🔍 Running analysis with MCP_CONFIG defaults:');
     console.log(`   Contact Center: ${MCP_CONFIG.defaultContactCenterId}`);
