@@ -17,7 +17,7 @@ class CSSSearchTool:
         
         try:
             # Extract and validate required parameters
-            contact_center_id = arguments.get("contactCenterId")
+            contact_center_id = 'gd-dev-us-001' #arguments.get("contactCenterId")
             
             if not contact_center_id:
                 return {
@@ -33,9 +33,9 @@ class CSSSearchTool:
             
             # Add optional parameters
             optional_params = [
-                "startDate", "endDate", "customerId", "jomaxId", 
-                "conversationId", "limit", "nextToken"
+                "startDate", "endDate"
             ]
+
             
             for param in optional_params:
                 if param in arguments and arguments[param] is not None:
@@ -47,6 +47,7 @@ class CSSSearchTool:
             url = f"{api_base_url}{api_endpoint}"
             
             # Make authenticated API request using the common OAuth utility
+            print(f"CSS Search Tool API Parameters: {api_params}")
             response = await make_authenticated_request("GET", url, params=api_params)
             
             if not response:

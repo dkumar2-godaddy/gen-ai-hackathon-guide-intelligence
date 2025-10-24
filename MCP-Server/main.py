@@ -43,27 +43,16 @@ def register_tools() -> None:
         contactCenterId: str,
         startDate: Optional[str] = None,
         endDate: Optional[str] = None,
-        customerId: Optional[str] = None,
-        jomaxId: Optional[str] = None,
-        conversationId: Optional[str] = None,
-        limit: Optional[int] = None,
-        nextToken: Optional[str] = None,
     ) -> dict:
         """Call Conversation State Service API to retrieve conversation data based on date range and contact center ID.
         - contactCenterId: Contact center ID (e.g., "liveperson:30187337")
         - startDate, endDate: YYYY-MM-DD HH:MM
-        - Optional filters: customerId, jomaxId, conversationId, limit, nextToken
         """
         tool = CSSSearchTool()
         args = {
             "contactCenterId": contactCenterId,
             "startDate": startDate,
             "endDate": endDate,
-            "customerId": customerId,
-            "jomaxId": jomaxId,
-            "conversationId": conversationId,
-            "limit": limit,
-            "nextToken": nextToken,
         }
         return await tool.execute(args)
 

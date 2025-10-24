@@ -55,18 +55,13 @@ app.post('/api/agents', async (req: Request, res: Response) => {
 app.get('/api/agents/:agentId',async (req: Request<{ agentId: string }>, res: Response) => {
 	const { agentId } = req.params;
 	const { startDate, endDate } = req.body;
-	const agent = mockAgents.find(a => a.id === agentId);
-	if (!agent) {
-		return res.status(404).json({ error: 'Agent not found' });
-	}
 	const analyzer = new AgentIntelligenceAnalyzer();
 	await analyzer.initialize();
 	const result = await analyzer.analyzeAgent({
 		agentId:  agentId,
-		startDate: startDate,
-		endDate: endDate
+		startDate: "2025-10-17 00:00",
+		endDate: "2025-10-17 23:59"
 	});
-
 	return res.json(result);
 	// return res.json({
 	// 	agentName: agent.name,
