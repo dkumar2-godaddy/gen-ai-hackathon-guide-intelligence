@@ -3,4 +3,14 @@
 node_modules
 dist
 __pycache__
+venv
 
+# Build files
+build/
+build/static/
+
+# MCP Server virtual environment
+MCP-Server/venv/
+
+# Log files
+*.log

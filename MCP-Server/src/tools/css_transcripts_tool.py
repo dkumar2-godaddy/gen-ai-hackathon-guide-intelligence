@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 class CSSTranscriptsTool:
     async def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute the conversation state service API call to retrieve transcripts"""
-        
         try:
             # Extract and validate required parameters
             ucid = arguments.get("ucid")

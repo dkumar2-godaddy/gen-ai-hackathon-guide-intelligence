@@ -137,6 +137,7 @@ export class AgentIntelligenceAnalyzer {
   }): Promise<TeamSummary> {
     try {
       console.log('🤖 Starting autonomous agent intelligence analysis...');
+      console.log('📋 Analysis parameters:', params);
       
       // Create a comprehensive prompt that will trigger the LLM to use tools autonomously
       const analysisPrompt = `
@@ -184,16 +185,32 @@ export class AgentIntelligenceAnalyzer {
         Ensure the JSON is valid and follows the exact schema structure.
       `;
 
+      console.log('🚀 Running LLM analysis...');
       // The LLM will now autonomously use the tools to complete the analysis
       const result = await run(this.agent, analysisPrompt);
       
-      console.log(result.finalOutput);
+      console.log('📝 LLM Analysis completed');
+      console.log('📄 Raw LLM output:', result.finalOutput);
+      console.log('📄 Output type:', typeof result.finalOutput);
+      console.log('📄 Output length:', result.finalOutput?.length || 0);
+      
       // Parse the LLM's output to extract structured data
-      return this.parseAnalysisResult(result.finalOutput || 'Analysis completed successfully.');
+      const parsedResult = this.parseAnalysisResult(result.finalOutput || 'Analysis completed successfully.');
+      console.log('✅ Parsed result:', JSON.stringify(parsedResult, null, 2));
+      
+      return parsedResult;
 
     } catch (error) {
       console.error('❌ Error in autonomous analysis:', error);
-      throw error;
+      console.error('Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
+      
+      // Return empty result instead of throwing to prevent API failures
+      return {
+        agentsSummary: []
+      };
     }
   }
 
@@ -303,14 +320,20 @@ export class AgentIntelligenceAnalyzer {
   private parseAnalysisResult(result: string): TeamSummary {
     // Parse the LLM's structured output to match the new JSON schema format
     try {
-      console.log("\n \n  results in parseAnalysisResult: ", result);
+      console.log("\n🔍 Parsing analysis result:", result);
+      console.log("Result type:", typeof result);
+      console.log("Result length:", result.length);
+      
       // Attempt to extract JSON if the LLM returns it
       const jsonMatch = result.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
+        console.log("Found JSON match:", jsonMatch[0]);
         const parsed = JSON.parse(jsonMatch[0]);
+        console.log("Parsed JSON:", parsed);
         
         // Validate and transform the parsed data to match our interface
         if (parsed.agentsSummary && Array.isArray(parsed.agentsSummary)) {
+          console.log("Found agentsSummary array with length:", parsed.agentsSummary.length);
           return {
             agentsSummary: parsed.agentsSummary.map((agent: any) => ({
               agentId: agent.agentId || '',
@@ -322,13 +345,19 @@ export class AgentIntelligenceAnalyzer {
               overallPerformanceScore: agent.overallPerformanceScore || 0
             }))
           };
+        } else {
+          console.log("No agentsSummary array found in parsed result");
         }
+      } else {
+        console.log("No JSON match found in result");
       }
     } catch (e) {
-      console.error('Error parsing analysis result:', e);
+      console.error('❌ Error parsing analysis result:', e);
+      console.error('Raw result that failed to parse:', result);
     }
 
     // Fallback structure with empty agentsSummary array
+    console.log("⚠️ Returning fallback empty agentsSummary array");
     return {
       agentsSummary: []
     };

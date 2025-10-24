@@ -14,18 +14,7 @@ logger = logging.getLogger(__name__)
 class CSSContactDetailTool:
     async def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute the conversation state service API call to get conversation details by UCID"""
-        
         try:
-            # Extract and validate required parameters
-            ucid = arguments.get("ucid")
-            
-            if not ucid:
-                return {
-                    "status": "error",
-                    "message": "Missing required parameter: ucid is required",
-                    "error": "Missing required parameter: ucid is required"
-                }
-            
             # Build API request parameters
             api_params = {}
 

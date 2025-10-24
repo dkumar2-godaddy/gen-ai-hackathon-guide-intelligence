@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 class CSSSearchTool:
     async def execute(self, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """Execute the conversation state service API call"""
-        
         try:
             # Extract and validate required parameters
             contact_center_id = 'gd-dev-us-001' #arguments.get("contactCenterId")
