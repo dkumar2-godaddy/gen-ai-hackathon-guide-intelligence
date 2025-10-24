@@ -7,95 +7,12 @@ const ConversationAnalytics = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Mock analytics data
-  const mockAnalytics = {
-    '7d': {
-      conversationTrend: [
-        { hour: '9AM', conversations: 45, resolved: 42 },
-        { hour: '10AM', conversations: 52, resolved: 48 },
-        { hour: '11AM', conversations: 38, resolved: 35 },
-        { hour: '12PM', conversations: 41, resolved: 38 },
-        { hour: '1PM', conversations: 35, resolved: 32 },
-        { hour: '2PM', conversations: 48, resolved: 45 },
-        { hour: '3PM', conversations: 55, resolved: 50 },
-        { hour: '4PM', conversations: 42, resolved: 40 }
-      ],
-      channelDistribution: [
-        { name: 'App', value: 45, color: '#3b82f6' },
-        { name: 'Web', value: 30, color: '#22c55e' },
-        { name: 'Phone', value: 15, color: '#f59e0b' },
-        { name: 'Email', value: 10, color: '#ef4444' }
-      ],
-      resolutionTime: [
-        { day: 'Mon', avgTime: 3.2, targetTime: 4.0 },
-        { day: 'Tue', avgTime: 2.8, targetTime: 4.0 },
-        { day: 'Wed', avgTime: 3.5, targetTime: 4.0 },
-        { day: 'Thu', avgTime: 2.9, targetTime: 4.0 },
-        { day: 'Fri', avgTime: 3.1, targetTime: 4.0 },
-        { day: 'Sat', avgTime: 4.2, targetTime: 4.0 },
-        { day: 'Sun', avgTime: 3.8, targetTime: 4.0 }
-      ],
-      satisfactionTrend: [
-        { day: 'Mon', satisfaction: 4.2 },
-        { day: 'Tue', satisfaction: 4.4 },
-        { day: 'Wed', satisfaction: 4.1 },
-        { day: 'Thu', satisfaction: 4.3 },
-        { day: 'Fri', satisfaction: 4.0 },
-        { day: 'Sat', satisfaction: 3.8 },
-        { day: 'Sun', satisfaction: 4.1 }
-      ],
-      metrics: {
-        totalConversations: 356,
-        resolvedConversations: 330,
-        avgResolutionTime: '3.2 min',
-        customerSatisfaction: '4.2/5',
-        escalationRate: '7.3%',
-        firstCallResolution: '89%'
-      }
-    },
-    '30d': {
-      conversationTrend: [
-        { week: 'Week 1', conversations: 1200, resolved: 1100 },
-        { week: 'Week 2', conversations: 1350, resolved: 1250 },
-        { week: 'Week 3', conversations: 1280, resolved: 1180 },
-        { week: 'Week 4', conversations: 1420, resolved: 1320 }
-      ],
-      channelDistribution: [
-        { name: 'App', value: 42, color: '#3b82f6' },
-        { name: 'Web', value: 28, color: '#22c55e' },
-        { name: 'Phone', value: 18, color: '#f59e0b' },
-        { name: 'Email', value: 12, color: '#ef4444' }
-      ],
-      resolutionTime: [
-        { week: 'Week 1', avgTime: 3.1, targetTime: 4.0 },
-        { week: 'Week 2', avgTime: 2.9, targetTime: 4.0 },
-        { week: 'Week 3', avgTime: 3.3, targetTime: 4.0 },
-        { week: 'Week 4', avgTime: 2.8, targetTime: 4.0 }
-      ],
-      satisfactionTrend: [
-        { week: 'Week 1', satisfaction: 4.1 },
-        { week: 'Week 2', satisfaction: 4.3 },
-        { week: 'Week 3', satisfaction: 4.0 },
-        { week: 'Week 4', satisfaction: 4.4 }
-      ],
-      metrics: {
-        totalConversations: 5250,
-        resolvedConversations: 4850,
-        avgResolutionTime: '3.0 min',
-        customerSatisfaction: '4.2/5',
-        escalationRate: '7.6%',
-        firstCallResolution: '92%'
-      }
-    }
-  };
 
   useEffect(() => {
     setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setAnalyticsData(mockAnalytics[timeRange]);
-      setLoading(false);
-    }, 1000);
+    // TODO: Implement real API call
+    setAnalyticsData(null);
+    setLoading(false);
   }, [timeRange]);
 
   if (loading) {
@@ -109,7 +26,7 @@ const ConversationAnalytics = () => {
     );
   }
 
-  const data = analyticsData || mockAnalytics[timeRange];
+  const data = analyticsData;
 
   return (
     <div className="space-y-6">

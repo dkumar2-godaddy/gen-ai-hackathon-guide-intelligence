@@ -20,12 +20,6 @@ type Agent = {
 	averageHandlingTime: number; // seconds
 };
 
-const mockAgents: Agent[] = [
-	{ id: 'agent-1', name: 'Alice', team: 'North', stats: { calls: 12, sentiment: 0.73 }, callStatus: 'available', averageHandlingTime: 320 },
-	{ id: 'agent-2', name: 'Bob', team: 'West', stats: { calls: 8, sentiment: 0.61 }, callStatus: 'on-call', averageHandlingTime: 410 },
-	{ id: 'agent-3', name: 'Cara', team: 'East', stats: { calls: 15, sentiment: 0.82 }, callStatus: 'offline', averageHandlingTime: 275 }
-];
-
 function parseIsoDate(value: unknown): Date | null {
 	if (typeof value !== 'string') return null;
 	const d = new Date(value);
@@ -34,50 +28,70 @@ function parseIsoDate(value: unknown): Date | null {
 
 // POST /api/agents - accepts date range in body
 app.post('/api/agents', async (req: Request, res: Response) => {
-	const { startDate, endDate } = req.body; //should be in format 2025-10-17 00:00
+	try {
+		console.log('📡 Received POST /api/agents request');
+		console.log('Request body:', req.body);
+		
+		const { startDate, endDate } = req.body; //should be in format 2025-10-17 00:00
 
-	if (!startDate || !endDate) {
-		return res.status(400).json({ error: 'Missing startDate or endDate in request body.' });
+		if (!startDate || !endDate) {
+			console.log('❌ Missing startDate or endDate in request body');
+			return res.status(400).json({ error: 'Missing startDate or endDate in request body.' });
+		}
+
+		console.log(`🔍 Analyzing team performance for date range: ${startDate} to ${endDate}`);
+		
+		const analyzer = new AgentIntelligenceAnalyzer();
+		await analyzer.initialize();
+		console.log('✅ Analyzer initialized successfully');
+		
+		const result = await analyzer.generateTeamFullDaySummary({
+			contactCenterId:  'gd-dev-us-001',
+			startDate: startDate,
+			endDate: endDate
+		});
+
+		console.log('📊 Analysis result:', JSON.stringify(result, null, 2));
+		return res.json(result);
+	} catch (error) {
+		console.error('❌ Error in POST /api/agents:', error);
+		return res.status(500).json({ 
+			error: 'Internal server error', 
+			message: error instanceof Error ? error.message : 'Unknown error',
+			agentsSummary: [] // Ensure we return the expected structure even on error
+		});
 	}
-
-	const result = mockAgents.map(a => [
-		/* agentName */ a.name,
-		/* agentId */ a.id,
-		/* sentimentScore */ a.stats.sentiment,
-		/* numberOfConversations */ a.stats.calls,
-		/* callStatus */ a.chatStatus,
-		/* averageHandlingTime */ a.averageHandlingTime
-	]);
-
-	return res.json(result);
 });
 
 // GET /api/agents/:agentId -> returns agent specific details
-app.get('/api/agents/:agentId',async (req: Request<{ agentId: string }>, res: Response) => {
-	const { agentId } = req.params;
-	const { startDate, endDate } = req.body;
-	const agent = mockAgents.find(a => a.id === agentId);
-	if (!agent) {
-		return res.status(404).json({ error: 'Agent not found' });
+app.get('/api/agents/:agentId', async (req: Request<{ agentId: string }>, res: Response) => {
+	try {
+		console.log('📡 Received GET /api/agents/:agentId request');
+		console.log('Agent ID:', req.params.agentId);
+		console.log('Request body:', req.body);
+		
+		const { agentId } = req.params;
+		const { startDate, endDate } = req.body;
+		
+		const analyzer = new AgentIntelligenceAnalyzer();
+		await analyzer.initialize();
+		console.log('✅ Analyzer initialized successfully for agent analysis');
+		
+		const result = await analyzer.analyzeAgent({
+			agentId: agentId,
+			startDate: startDate as string,
+			endDate: endDate as string
+		});
+		
+		console.log('📊 Agent analysis result:', JSON.stringify(result, null, 2));
+		return res.json(result);
+	} catch (error) {
+		console.error('❌ Error in GET /api/agents/:agentId:', error);
+		return res.status(500).json({ 
+			error: 'Internal server error', 
+			message: error instanceof Error ? error.message : 'Unknown error'
+		});
 	}
-	return res.json({
-		agentName: agent.name,
-		agentId: agent.id,
-		sentimentScore: agent.stats.sentiment,
-		numberOfConversations: agent.stats.calls,
-		callStatus: agent.chatStatus,
-		averageHandlingTime: agent.averageHandlingTime
-	});
-
-	return res.json(result);
-	// return res.json({
-	// 	agentName: agent.name,
-	// 	agentId: agent.id,
-	// 	sentimentScore: agent.stats.sentiment,
-	// 	numberOfConversations: agent.stats.calls,
-	// 	callStatus: agent.callStatus,
-	// 	averageHandlingTime: agent.averageHandlingTime
-	// });
 });
 
 const server = http.createServer(app);
@@ -85,17 +99,31 @@ const server = http.createServer(app);
 
 
 // websocket to return agentId on alert event
+// const wss = new WebSocketServer({ server, path: '/ws' });
+
+// wss.on('connection', (ws: WebSocket) => {
+	
+// 	ws.send(JSON.stringify({ agentId: "agentId" }));
+
+// 	ws.on('message', () => {
+// 		// no-op
+// 	});
+// });
+
+// websocket to return agentId on alert event
 const wss = new WebSocketServer({ server, path: '/ws' });
 
 wss.on('connection', (ws: WebSocket) => {
 	
-	ws.send(JSON.stringify({ agentId: "agentId" }));
+	// Send agentId "jkumari1" after 1 minute (60 seconds)
+	setTimeout(() => {
+		ws.send(JSON.stringify({ agentId: "jkumari1" }));
+	}, 60000); // 60 seconds = 60000 milliseconds
 
 	ws.on('message', () => {
 		// no-op
 	});
 });
-
 
 console.log(process.env.PORT);
 
@@ -103,5 +131,3 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
 server.listen(PORT, () => {
 	console.log(`Middleware server listening on http://localhost:${PORT}`);
 });
-
-

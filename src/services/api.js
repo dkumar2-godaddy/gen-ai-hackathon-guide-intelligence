@@ -42,13 +42,15 @@ api.interceptors.response.use(
 
 // API endpoints
 export const apiEndpoints = {
-  // POST /api/agents - accepts startDate and endDate in body
+  // POST /api/agents - returns agents with date filtering
   getAgents: (startDate, endDate) => 
     api.post('/api/agents', { startDate, endDate }),
   
-  // GET /api/agents/:agentId - returns agent specific details with date filtering
+  // GET /api/agents/:agentId - returns agent specific details
   getAgentById: (agentId, startDate, endDate) => 
-    api.get(`/api/agents/${agentId}?startDate=${startDate}&endDate=${endDate}`),
+    api.get(`/api/agents/${agentId}`, { 
+      data: { startDate, endDate }
+    }),
   
   // Analytics (keeping existing for compatibility)
   getConversationAnalytics: (timeRange) => 

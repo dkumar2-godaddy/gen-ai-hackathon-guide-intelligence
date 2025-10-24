@@ -34,8 +34,8 @@ stop_service() {
 # Stop React App
 stop_service "React App" "react-app.pid"
 
-# Stop Backend API
-stop_service "Backend API" "backend.pid"
+# Stop LLM Server
+stop_service "LLM Server" "llm-server.pid"
 
 # Stop MCP Server
 stop_service "MCP Server" "mcp-server.pid"
@@ -45,7 +45,7 @@ echo ""
 echo "🧹 Cleaning up remaining processes..."
 
 # Kill any remaining processes on our ports
-for port in 3000 8000; do
+for port in 3000 4000; do
     local pid=$(lsof -ti:$port)
     if [ ! -z "$pid" ]; then
         echo "Killing process on port $port (PID: $pid)..."
@@ -67,7 +67,7 @@ echo "====================================="
 echo ""
 echo "📝 Log files preserved (unless removed above):"
 echo "   - mcp-server.log"
-echo "   - backend.log"
+echo "   - llm-server.log"
 echo "   - react-app.log"
 echo ""
 echo "🚀 To start again, run: ./start.sh"

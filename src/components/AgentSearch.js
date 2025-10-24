@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Search, User, Clock, Star, MessageSquare, AlertCircle, Loader, Calendar } from 'lucide-react';
 import { getAgentById } from '../services/api';
 
-const AgentSearch = () => {
+const AgentSearch = ({ agent: selectedAgent }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [agentData, setAgentData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -18,6 +18,14 @@ const AgentSearch = () => {
     setEndDate(today.toISOString().split('T')[0]);
     setStartDate(lastWeek.toISOString().split('T')[0]);
   }, []);
+
+  // Auto-load agent data when selectedAgent is provided
+  React.useEffect(() => {
+    if (selectedAgent) {
+      setSearchTerm(selectedAgent.jomaxId || selectedAgent.id);
+      setAgentData(selectedAgent);
+    }
+  }, [selectedAgent]);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -47,6 +55,7 @@ const AgentSearch = () => {
       const formattedEndDate = endDate + ' 23:59';
 
       const data = await getAgentById(agentId, formattedStartDate, formattedEndDate);
+      console.log('Agent search response:', data);
       setAgentData(data);
     } catch (err) {
       setError(err.message || 'Failed to fetch agent details');
@@ -89,260 +98,416 @@ const AgentSearch = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Search Form */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-900">Agent Search</h2>
-          <div className="text-sm text-gray-500">
-            Search by agent ID or jomax/agentid format
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+      <div className="p-6">
+        <div className="max-w-6xl mx-auto space-y-8">
+          {/* Enhanced Header */}
+          <div className="text-center mb-8">
+            <h2 className="text-4xl font-bold text-gray-900 mb-3">Agent Search</h2>
+            <p className="text-lg text-gray-600">Search and analyze individual agent performance metrics</p>
           </div>
-        </div>
 
-        <form onSubmit={handleSearch} className="space-y-4">
-          {/* Search Input */}
-          <div className="flex space-x-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Enter agent ID (e.g., agent-1 or jomax/agent-1)"
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  disabled={loading}
-                />
+          {/* Enhanced Search Form - Only show if no selectedAgent */}
+          {!selectedAgent && (
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">Search Agent</h3>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Search by agent ID or jomax/agentid format
+                  </p>
+                </div>
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full flex items-center justify-center">
+                  <Search className="h-6 w-6 text-white" />
+                </div>
+              </div>
+
+            <form onSubmit={handleSearch} className="space-y-6">
+              {/* Enhanced Search Input */}
+              <div className="flex space-x-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Enter agent ID (e.g., jkumari1 or jomax/jkumari1)"
+                      className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg transition-all duration-200 hover:border-gray-300"
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  disabled={loading || !searchTerm.trim() || !startDate || !endDate}
+                  className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  {loading ? (
+                    <Loader className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <Search className="h-5 w-5" />
+                  )}
+                  <span className="font-semibold">{loading ? 'Searching...' : 'Search'}</span>
+                </button>
+              </div>
+
+              {/* Enhanced Date Range Picker */}
+              <div className="bg-gray-50 rounded-xl p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Calendar className="h-5 w-5 text-blue-600" />
+                  <span className="text-sm font-semibold text-gray-800">Date Range Filter</span>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-gray-600 mb-2">Start Date</label>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                      disabled={loading}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-gray-600 mb-2">End Date</label>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm transition-all duration-200"
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+                
+                {/* Enhanced Quick Date Range Presets */}
+                <div className="flex items-center space-x-3 mt-4">
+                  <span className="text-sm font-medium text-gray-600">Quick select:</span>
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const today = new Date();
+                        const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+                        setStartDate(yesterday.toISOString().split('T')[0]);
+                        setEndDate(today.toISOString().split('T')[0]);
+                      }}
+                      className="px-4 py-2 text-sm bg-white text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 border border-gray-200 hover:border-blue-300"
+                      disabled={loading}
+                    >
+                      Yesterday
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const today = new Date();
+                        const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+                        setStartDate(lastWeek.toISOString().split('T')[0]);
+                        setEndDate(today.toISOString().split('T')[0]);
+                      }}
+                      className="px-4 py-2 text-sm bg-white text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 border border-gray-200 hover:border-blue-300"
+                      disabled={loading}
+                    >
+                      Last 7 days
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const today = new Date();
+                        const lastMonth = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+                        setStartDate(lastMonth.toISOString().split('T')[0]);
+                        setEndDate(today.toISOString().split('T')[0]);
+                      }}
+                      className="px-4 py-2 text-sm bg-white text-gray-700 transition-all duration-200 border border-gray-200 hover:border-blue-300"
+                      disabled={loading}
+                    >
+                      Last 30 days
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          )}
+
+          {/* Enhanced Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+              <div className="flex">
+                <AlertCircle className="h-6 w-6 text-red-400" />
+                <div className="ml-3">
+                  <h3 className="text-sm font-semibold text-red-800">Error</h3>
+                  <div className="mt-2 text-sm text-red-700">{error}</div>
+                </div>
               </div>
             </div>
-            <button
-              type="submit"
-              disabled={loading || !searchTerm.trim() || !startDate || !endDate}
-              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
-            >
-              {loading ? (
-                <Loader className="h-4 w-4 animate-spin" />
-              ) : (
-                <Search className="h-4 w-4" />
+          )}
+
+          {/* Enhanced Agent Details */}
+          {agentData && (
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className="text-2xl font-bold text-gray-900">Agent Details</h3>
+                  <p className="text-gray-600 mt-1">Comprehensive performance analysis</p>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <div className="w-4 h-4 bg-green-500 rounded-full"></div>
+                  <span className="px-4 py-2 rounded-full text-sm font-semibold text-green-700 bg-green-100">
+                    Active
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {/* Enhanced Basic Info */}
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <User className="h-6 w-6 text-blue-600" />
+                      <h4 className="text-lg font-semibold text-gray-900">Agent Information</h4>
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Agent Name</label>
+                        <p className="text-xl font-bold text-gray-900 mt-1">{agentData.agentName || 'Unknown'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Agent ID</label>
+                        <p className="text-lg text-gray-900 font-mono mt-1">{agentData.agentId || 'Unknown'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Enhanced Performance Metrics */}
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <Star className="h-6 w-6 text-green-600" />
+                      <h4 className="text-lg font-semibold text-gray-900">Key Metrics</h4>
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Customer Satisfaction</label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Star className="h-5 w-5 text-yellow-400" />
+                          <span className="text-2xl font-bold text-gray-900">
+                            {agentData.performanceScore?.customerSatisfaction ? `${agentData.performanceScore.customerSatisfaction}/100` : 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Total Interactions</label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <MessageSquare className="h-5 w-5 text-blue-400" />
+                          <span className="text-2xl font-bold text-gray-900">
+                            {agentData.performanceStats?.totalInteractions || 0}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Enhanced Performance Stats */}
+                <div className="space-y-6">
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6">
+                    <div className="flex items-center space-x-3 mb-4">
+                      <Clock className="h-6 w-6 text-purple-600" />
+                      <h4 className="text-lg font-semibold text-gray-900">Performance Stats</h4>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Response Time</label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Clock className="h-4 w-4 text-gray-400" />
+                          <span className="text-lg font-bold text-gray-900">
+                            {agentData.performanceStats?.averageResponseTimeSeconds ? `${Math.round(agentData.performanceStats.averageResponseTimeSeconds)}s` : 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Total Duration</label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Clock className="h-4 w-4 text-gray-400" />
+                          <span className="text-lg font-bold text-gray-900">
+                            {agentData.performanceStats?.totalDurationSeconds ? `${Math.round(agentData.performanceStats.totalDurationSeconds / 3600 * 100) / 100}h` : 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Completion Rate</label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Star className="h-4 w-4 text-green-400" />
+                          <span className="text-lg font-bold text-gray-900">
+                            {agentData.performanceStats?.sessionCompletionRate ? `${Math.round(agentData.performanceStats.sessionCompletionRate * 100)}%` : 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium text-gray-600">Resolution Rate</label>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <MessageSquare className="h-4 w-4 text-blue-400" />
+                          <span className="text-lg font-bold text-gray-900">
+                            {agentData.performanceStats?.resolutionRate ? `${Math.round(agentData.performanceStats.resolutionRate * 100)}%` : 'N/A'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Enhanced Performance Summary */}
+              <div className="mt-8">
+                <h4 className="text-2xl font-bold text-gray-900 mb-6">Performance Summary</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-semibold text-gray-700">Overall Performance</span>
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <Star className="h-4 w-4 text-green-600" />
+                      </div>
+                    </div>
+                    <div className="text-3xl font-bold text-green-600 mb-2">
+                      {agentData.performanceScore?.overall ? `${agentData.performanceScore.overall}/100` : 'N/A'}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Based on comprehensive analysis
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-6 border border-yellow-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-semibold text-gray-700">Activity Level</span>
+                      <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <MessageSquare className="h-4 w-4 text-yellow-600" />
+                      </div>
+                    </div>
+                    <div className="text-3xl font-bold text-yellow-600 mb-2">
+                      {(agentData.performanceStats?.totalInteractions || 0) > 50 ? 'High' : 
+                       (agentData.performanceStats?.totalInteractions || 0) > 20 ? 'Medium' : 'Low'}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {agentData.performanceStats?.totalInteractions || 0} total interactions
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-semibold text-gray-700">Communication Quality</span>
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <MessageSquare className="h-4 w-4 text-blue-600" />
+                      </div>
+                    </div>
+                    <div className="text-3xl font-bold text-blue-600 mb-2">
+                      {agentData.performanceScore?.communicationQuality ? `${agentData.performanceScore.communicationQuality}/100` : 'N/A'}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Communication effectiveness score
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Enhanced Additional Performance Scores */}
+              <div className="mt-8">
+                <h4 className="text-2xl font-bold text-gray-900 mb-6">Performance Scores</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-xl p-6 border border-cyan-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-semibold text-gray-700">Responsiveness</span>
+                      <div className="w-8 h-8 bg-cyan-100 rounded-full flex items-center justify-center">
+                        <Clock className="h-4 w-4 text-cyan-600" />
+                      </div>
+                    </div>
+                    <div className="text-3xl font-bold text-cyan-600 mb-2">
+                      {agentData.performanceScore?.responsiveness ? `${agentData.performanceScore.responsiveness}/100` : 'N/A'}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Response time effectiveness
+                    </div>
+                  </div>
+                  <div className="bg-gradient-to-r from-orange-50 to-red-50 rounded-xl p-6 border border-orange-200">
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-semibold text-gray-700">Customer Wait Time</span>
+                      <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                        <Clock className="h-4 w-4 text-orange-600" />
+                      </div>
+                    </div>
+                    <div className="text-3xl font-bold text-orange-600 mb-2">
+                      {agentData.performanceStats?.averageCustomerWaitTimeSeconds ? `${agentData.performanceStats.averageCustomerWaitTimeSeconds}s` : 'N/A'}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Average customer wait time
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Enhanced Alert Flags */}
+              {agentData.alertFlags && agentData.alertFlags.length > 0 && (
+                <div className="mt-8">
+                  <h4 className="text-2xl font-bold text-gray-900 mb-6">Alert Flags</h4>
+                  <div className="space-y-4">
+                    {agentData.alertFlags.map((flag, index) => (
+                      <div key={index} className={`rounded-xl p-6 border-2 ${
+                        flag.severity === 'critical' ? 'bg-red-50 border-red-200' :
+                        flag.severity === 'high' ? 'bg-orange-50 border-orange-200' :
+                        flag.severity === 'medium' ? 'bg-yellow-50 border-yellow-200' :
+                        'bg-blue-50 border-blue-200'
+                      }`}>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-3">
+                              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                flag.severity === 'critical' ? 'bg-red-100' :
+                                flag.severity === 'high' ? 'bg-orange-100' :
+                                flag.severity === 'medium' ? 'bg-yellow-100' :
+                                'bg-blue-100'
+                              }`}>
+                                <AlertCircle className={`h-4 w-4 ${
+                                  flag.severity === 'critical' ? 'text-red-600' :
+                                  flag.severity === 'high' ? 'text-orange-600' :
+                                  flag.severity === 'medium' ? 'text-yellow-600' :
+                                  'text-blue-600'
+                                }`} />
+                              </div>
+                              <div>
+                                <span className="text-lg font-semibold text-gray-900 capitalize">
+                                  {flag.flagType.replace(/_/g, ' ')}
+                                </span>
+                                <span className={`ml-3 px-3 py-1 rounded-full text-sm font-medium ${
+                                  flag.severity === 'critical' ? 'bg-red-100 text-red-800' :
+                                  flag.severity === 'high' ? 'bg-orange-100 text-orange-800' :
+                                  flag.severity === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-blue-100 text-blue-800'
+                                }`}>
+                                  {flag.severity}
+                                </span>
+                              </div>
+                            </div>
+                            {flag.description && (
+                              <p className="text-gray-700 mb-3">{flag.description}</p>
+                            )}
+                            {flag.detectedAt && (
+                              <p className="text-sm text-gray-500">
+                                Detected: {new Date(flag.detectedAt).toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
-              <span>{loading ? 'Searching...' : 'Search'}</span>
-            </button>
-          </div>
-
-          {/* Date Range Picker */}
-          <div className="space-y-3">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <Calendar className="h-4 w-4 text-gray-400" />
-                <span className="text-sm font-medium text-gray-700">Date Range:</span>
-              </div>
-              <div className="flex items-center space-x-4">
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">Start Date</label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
-                    disabled={loading}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-500 mb-1">End Date</label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
-                    disabled={loading}
-                  />
-                </div>
-              </div>
             </div>
-            
-            {/* Quick Date Range Presets */}
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-gray-500">Quick select:</span>
-              <button
-                type="button"
-                onClick={() => {
-                  const today = new Date();
-                  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
-                  setStartDate(yesterday.toISOString().split('T')[0]);
-                  setEndDate(today.toISOString().split('T')[0]);
-                }}
-                className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded text-gray-700"
-                disabled={loading}
-              >
-                Yesterday
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const today = new Date();
-                  const lastWeek = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-                  setStartDate(lastWeek.toISOString().split('T')[0]);
-                  setEndDate(today.toISOString().split('T')[0]);
-                }}
-                className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded text-gray-700"
-                disabled={loading}
-              >
-                Last 7 days
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const today = new Date();
-                  const lastMonth = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
-                  setStartDate(lastMonth.toISOString().split('T')[0]);
-                  setEndDate(today.toISOString().split('T')[0]);
-                }}
-                className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded text-gray-700"
-                disabled={loading}
-              >
-                Last 30 days
-              </button>
-            </div>
-          </div>
-        </form>
+          )}
+        </div>
       </div>
-
-      {/* Error Message */}
-      {error && (
-        <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
-          <div className="flex">
-            <AlertCircle className="h-5 w-5 text-danger-400" />
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-danger-800">Error</h3>
-              <div className="mt-2 text-sm text-danger-700">{error}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Agent Details */}
-      {agentData && (
-        <div className="card">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold text-gray-900">Agent Details</h3>
-            <div className="flex items-center space-x-2">
-              {getStatusIcon(agentData.callStatus)}
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(agentData.callStatus)}`}>
-                {agentData.callStatus.charAt(0).toUpperCase() + agentData.callStatus.slice(1)}
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Basic Info */}
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Agent Name</label>
-                <p className="text-lg font-semibold text-gray-900">{agentData.agentName}</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Agent ID</label>
-                <p className="text-sm text-gray-900 font-mono">{agentData.agentId}</p>
-              </div>
-            </div>
-
-            {/* Performance Metrics */}
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Sentiment Score</label>
-                <div className="flex items-center space-x-2">
-                  <Star className="h-4 w-4 text-warning-400" />
-                  <span className="text-lg font-semibold text-gray-900">
-                    {(agentData.sentimentScore * 100).toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-500">Conversations</label>
-                <div className="flex items-center space-x-2">
-                  <MessageSquare className="h-4 w-4 text-primary-400" />
-                  <span className="text-lg font-semibold text-gray-900">
-                    {agentData.numberOfConversations}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Handling Time */}
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium text-gray-500">Average Handling Time</label>
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-gray-400" />
-                  <span className="text-lg font-semibold text-gray-900">
-                    {formatDuration(agentData.averageHandlingTime)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Performance Summary */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <h4 className="text-lg font-semibold text-gray-900 mb-4">Performance Summary</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Sentiment Rating</span>
-                  <span className={`text-sm font-medium ${
-                    agentData.sentimentScore > 0.7 ? 'text-success-600' : 
-                    agentData.sentimentScore > 0.5 ? 'text-warning-600' : 'text-danger-600'
-                  }`}>
-                    {agentData.sentimentScore > 0.7 ? 'Excellent' : 
-                     agentData.sentimentScore > 0.5 ? 'Good' : 'Needs Improvement'}
-                  </span>
-                </div>
-                <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className={`h-2 rounded-full ${
-                      agentData.sentimentScore > 0.7 ? 'bg-success-500' : 
-                      agentData.sentimentScore > 0.5 ? 'bg-warning-500' : 'bg-danger-500'
-                    }`}
-                    style={{ width: `${agentData.sentimentScore * 100}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Activity Level</span>
-                  <span className={`text-sm font-medium ${
-                    agentData.numberOfConversations > 10 ? 'text-success-600' : 
-                    agentData.numberOfConversations > 5 ? 'text-warning-600' : 'text-gray-600'
-                  }`}>
-                    {agentData.numberOfConversations > 10 ? 'High' : 
-                     agentData.numberOfConversations > 5 ? 'Medium' : 'Low'}
-                  </span>
-                </div>
-                <div className="mt-2 text-xs text-gray-500">
-                  {agentData.numberOfConversations} conversations
-                </div>
-              </div>
-
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">Efficiency</span>
-                  <span className={`text-sm font-medium ${
-                    agentData.averageHandlingTime < 300 ? 'text-success-600' : 
-                    agentData.averageHandlingTime < 600 ? 'text-warning-600' : 'text-danger-600'
-                  }`}>
-                    {agentData.averageHandlingTime < 300 ? 'Fast' : 
-                     agentData.averageHandlingTime < 600 ? 'Average' : 'Slow'}
-                  </span>
-                </div>
-                <div className="mt-2 text-xs text-gray-500">
-                  {formatDuration(agentData.averageHandlingTime)} avg
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

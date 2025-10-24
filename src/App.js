@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
-import { Search, Users, BarChart3, Activity, Settings } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Users } from 'lucide-react';
 import AgentSearch from './components/AgentSearch';
-import PerformanceDashboard from './components/PerformanceDashboard';
 import ActiveAgentsDashboard from './components/ActiveAgentsDashboard';
-import ConversationAnalytics from './components/ConversationAnalytics';
-import SystemHealth from './components/SystemHealth';
+// import ConversationAnalytics from './components/ConversationAnalytics';
+// import SystemHealth from './components/SystemHealth';
 
 function App() {
   const [activeTab, setActiveTab] = useState('active');
@@ -12,16 +11,29 @@ function App() {
 
   const tabs = [
     { id: 'active', name: 'Active Agents', icon: Users },
-    { id: 'search', name: 'Agent Search', icon: Search },
-    { id: 'performance', name: 'Performance', icon: BarChart3 },
-    { id: 'analytics', name: 'Analytics', icon: Activity },
-    { id: 'system', name: 'System Health', icon: Settings }
+    { id: 'search', name: 'Agent Search', icon: Search }
+    // { id: 'analytics', name: 'Analytics', icon: Activity },
+    // { id: 'system', name: 'System Health', icon: Settings }
   ];
 
   const handleAgentSelect = (agent) => {
+    console.log('🎯 handleAgentSelect called in App.js with:', agent);
+    console.log('🎯 Agent type:', typeof agent);
+    console.log('🎯 Agent keys:', Object.keys(agent || {}));
     setSelectedAgent(agent);
-    setActiveTab('performance');
+    console.log('🎯 selectedAgent state set to:', agent);
+    console.log('🎯 State update should trigger re-render');
   };
+
+  const handleBackToDashboard = () => {
+    setSelectedAgent(null);
+  };
+
+  // Debug useEffect to monitor selectedAgent changes
+  useEffect(() => {
+    console.log('🔄 selectedAgent state changed:', selectedAgent);
+    console.log('🔄 Will render:', selectedAgent ? 'AgentSearch' : 'ActiveAgentsDashboard');
+  }, [selectedAgent]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -71,24 +83,38 @@ function App() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {activeTab === 'active' && (
-          <ActiveAgentsDashboard />
+          selectedAgent ? (
+            <div>
+              <div className="mb-4">
+                <button
+                  onClick={handleBackToDashboard}
+                  className="flex items-center text-sm text-gray-600 hover:text-gray-900"
+                >
+                  ← Back to Active Agents
+                </button>
+              </div>
+              <AgentSearch agent={selectedAgent} />
+            </div>
+          ) : (
+            <ActiveAgentsDashboard onAgentSelect={handleAgentSelect} />
+          )
         )}
+        
+        {/* Debug info */}
+        {console.log('🔍 Current selectedAgent state:', selectedAgent)}
+        {console.log('🔍 Current activeTab:', activeTab)}
         
         {activeTab === 'search' && (
-          <AgentSearch onAgentSelect={handleAgentSelect} />
+          <AgentSearch />
         )}
         
-        {activeTab === 'performance' && (
-          <PerformanceDashboard agent={selectedAgent} />
-        )}
-        
-        {activeTab === 'analytics' && (
+        {/* {activeTab === 'analytics' && (
           <ConversationAnalytics />
         )}
         
         {activeTab === 'system' && (
           <SystemHealth />
-        )}
+        )} */}
       </main>
     </div>
   );

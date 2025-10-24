@@ -23,7 +23,7 @@ check_port() {
 # Check ports
 echo "🔍 Checking ports..."
 check_port 3000 || exit 1
-check_port 8000 || exit 1
+check_port 4000 || exit 1
 
 # Install dependencies if needed
 echo "📦 Installing dependencies..."
@@ -34,15 +34,6 @@ if [ ! -d "node_modules" ]; then
     npm install
 fi
 
-# Install backend dependencies
-if [ ! -d "backend/venv" ]; then
-    echo "Creating Python virtual environment..."
-    cd backend
-    python3 -m venv venv
-    source venv/bin/activate
-    pip install -r requirements.txt
-    cd ..
-fi
 
 # Install MCP server dependencies
 if [ ! -d "MCP-SERVER/venv" ]; then
@@ -102,18 +93,19 @@ echo "✅ MCP Server started (PID: $MCP_PID)"
 # Wait a moment for MCP server to start
 sleep 2
 
-# Start Backend API
-echo "🌐 Starting Backend API..."
-cd backend
-source venv/bin/activate
-python app.py > ../backend.log 2>&1 &
-BACKEND_PID=$!
-echo $BACKEND_PID > ../backend.pid
-cd ..
-echo "✅ Backend API started (PID: $BACKEND_PID)"
+# Start LLM Server
+echo "🤖 Starting LLM Server..."
+cd LLM-Server/gd-agent-sdk-llm
+npm install > ../../llm-server.log 2>&1
+npm run dev > ../../llm-server.log 2>&1 &
+LLM_PID=$!
+echo $LLM_PID > ../../llm-server.pid
+cd ../..
+echo "✅ LLM Server started (PID: $LLM_PID)"
 
-# Wait a moment for backend to start
+# Wait a moment for LLM server to start
 sleep 3
+
 
 # Start React App
 echo "⚛️  Starting React App..."
@@ -127,17 +119,16 @@ echo "🎉 All services started successfully!"
 echo "=================================="
 echo ""
 echo "📱 Frontend:     http://localhost:3000"
-echo "🔧 Backend API:  http://localhost:8000"
-echo "📚 API Docs:     http://localhost:8000/docs"
+echo "🔧 LLM Server:  http://localhost:4000"
 echo ""
 echo "📋 Service Status:"
 echo "   MCP Server:   PID $MCP_PID"
-echo "   Backend API:  PID $BACKEND_PID"
+echo "   LLM Server:   PID $LLM_PID"
 echo "   React App:    PID $REACT_PID"
 echo ""
 echo "📝 Logs:"
 echo "   MCP Server:   mcp-server.log"
-echo "   Backend API:  backend.log"
+echo "   LLM Server:   llm-server.log"
 echo "   React App:    react-app.log"
 echo ""
 echo "🛑 To stop all services, run: ./stop.sh"

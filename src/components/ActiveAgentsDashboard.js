@@ -1,18 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Users, Activity, Clock, MessageSquare, Star, AlertCircle } from 'lucide-react';
-import { getActiveAgents } from '../services/api';
+import { Users, Activity, Clock, MessageSquare, Star, AlertCircle, Calendar } from 'lucide-react';
+import { getActiveAgents, getAgentById } from '../services/api';
 import websocketService from '../services/websocket';
 import notificationService from '../services/notification';
 
-const ActiveAgentsDashboard = () => {
+const ActiveAgentsDashboard = ({ onAgentSelect }) => {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
   const [error, setError] = useState(null);
-  const [pollingInterval, setPollingInterval] = useState(30000); // 30 seconds default
   const [wsConnected, setWsConnected] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [isPollingPaused, setIsPollingPaused] = useState(false);
+  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]); // Current date
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]); // Current date
+  const [dataLoaded, setDataLoaded] = useState(false);
 
 
   const fetchActiveAgents = useCallback(async () => {
@@ -20,50 +21,139 @@ const ActiveAgentsDashboard = () => {
       setError(null);
       setLoading(true);
       
+      // Validate date range
+      if (new Date(startDate) > new Date(endDate)) {
+        setError('Start date cannot be after end date');
+        setLoading(false);
+        return;
+      }
+      
       // Format dates as required by the server (2025-10-17 00:00 format)
-      const endDate = new Date().toISOString().split('T')[0] + ' 23:59';
-      const startDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0] + ' 00:00';
+      const formattedEndDate = endDate + ' 23:59';
+      const formattedStartDate = startDate + ' 00:00';
       
-      const data = await getActiveAgents(startDate, endDate);
+      const data = await getActiveAgents(formattedStartDate, formattedEndDate);
+      console.log('API Response:', data);
+      console.log('Data type:', typeof data);
+      console.log('Is array:', Array.isArray(data));
+      console.log('Data keys:', data ? Object.keys(data) : 'No data');
+      console.log('Data length:', Array.isArray(data) ? data.length : 'Not an array');
       
-      // Transform the API response to match our component structure with stable values
-      const transformedAgents = data.map((agent, index) => {
-        // Use agent ID to create consistent values instead of random
-        const agentId = agent[1];
-        const stableSeed = agentId.charCodeAt(agentId.length - 1) % 10; // Use last character for consistency
+      // Handle multiple API response formats dynamically
+      let transformedAgents = [];
+      let agentsArray = [];
+      
+      // Determine the correct agents array from different possible response formats
+      if (Array.isArray(data)) {
+        // Direct array format: [agent1, agent2, ...]
+        console.log('Received direct array format:', data);
+        agentsArray = data;
+      } else if (data && data.agentsSummary && Array.isArray(data.agentsSummary)) {
+        // LLM Server format: {agentsSummary: [...]}
+        console.log('Received agentsSummary format:', data);
+        agentsArray = data.agentsSummary;
+      } else if (data && data.agents && Array.isArray(data.agents)) {
+        // Backend format: {agents: [...]}
+        console.log('Received backend agents format:', data);
+        agentsArray = data.agents;
+      } else if (data && data.data && Array.isArray(data.data)) {
+        // Wrapped format: {data: [...]}
+        console.log('Received wrapped data format:', data);
+        agentsArray = data.data;
+      } else {
+        console.error('Unexpected data format:', data);
+        console.log('Available keys:', Object.keys(data || {}));
+        const errorMessage = `Invalid data format received from API. Expected array or object with agents/agentsSummary/data property. Received: ${JSON.stringify(data)}`;
+        throw new Error(errorMessage);
+      }
+      
+      // Transform agents array based on the detected format
+      if (agentsArray.length === 0) {
+        console.log('No agents found in response');
+        console.log('Raw API data for debugging:', JSON.stringify(data, null, 2));
         
-        return {
-          id: agent[1], // agentId
-          name: agent[0], // agentName
-          jomaxId: agent[1], // agentId
-          status: agent[4] === 'available' ? 'online' : agent[4] === 'on-call' ? 'busy' : 'away', // callStatus
-          currentConversations: (stableSeed % 3) + 1, // Stable conversation count (1-3)
-          totalConversations: agent[3], // numberOfConversations
-          avgResponseTime: ((agent[5] / 60) + (stableSeed % 3) * 0.1).toFixed(1), // Slight variation
-          satisfaction: (agent[2] * 5 + (stableSeed % 2) * 0.1).toFixed(1), // Slight variation
-          lastActivity: new Date(Date.now() - (stableSeed * 300000)), // 5-minute intervals
-          contactCenterId: `center-${(stableSeed % 3) + 1}`,
-          platform: stableSeed % 2 === 0 ? 'amazonconnect' : 'liveperson',
-          channel: ['app', 'web', 'phone'][stableSeed % 3],
-          sentimentScore: agent[2],
-          averageHandlingTime: agent[5]
-        };
-      });
+        transformedAgents = [];
+        
+        setAgents(transformedAgents);
+        setLastUpdate(new Date());
+        return;
+      } else {
+        console.log(`Processing ${agentsArray.length} agents`);
+        
+        // Check the structure of the first agent to determine the format
+        const firstAgent = agentsArray[0];
+        console.log('First agent structure:', firstAgent);
+        
+        if (firstAgent.agentId && firstAgent.agentName) {
+          // New API format: {agentId, agentName, performanceStats, overallPerformanceScore}
+          console.log('Detected new API format');
+          transformedAgents = agentsArray.map((agent, index) => {
+            return {
+              id: agent.agentId,
+              name: agent.agentName,
+              jomaxId: agent.agentId,
+              totalConversations: agent.performanceStats?.totalInteractions || 0,
+              averageHandlingTime: agent.performanceStats?.totalDurationSeconds || 0,
+              sentimentScore: (agent.overallPerformanceScore || 0) / 100,
+              avgResponseTime: agent.performanceStats?.totalInteractions > 0 
+                ? Math.round((agent.performanceStats.totalDurationSeconds / agent.performanceStats.totalInteractions) / 60)
+                : 0
+            };
+          });
+        } else if (firstAgent.id && firstAgent.name) {
+          // Backend format: {id, name, status, ...}
+          console.log('Detected backend format');
+          transformedAgents = agentsArray.map((agent, index) => {
+            return {
+              id: agent.id,
+              name: agent.name,
+              jomaxId: agent.jomaxId || agent.id,
+              totalConversations: agent.totalConversations || 0,
+              avgResponseTime: agent.avgResponseTime ? parseFloat(agent.avgResponseTime) : 0,
+              sentimentScore: agent.satisfaction ? agent.satisfaction / 5 : 0,
+              averageHandlingTime: agent.avgResponseTime ? parseFloat(agent.avgResponseTime) * 60 : 0
+            };
+          });
+        } else {
+          // Unknown format - try to extract what we can
+          console.log('Unknown agent format, attempting basic mapping');
+          transformedAgents = agentsArray.map((agent, index) => {
+            const stableSeed = index % 10;
+            return {
+              id: agent.id || agent.agentId || `agent-${index}`,
+              name: agent.name || agent.agentName || `Agent ${index + 1}`,
+              jomaxId: agent.jomaxId || agent.id || agent.agentId || `agent-${index}`,
+              totalConversations: agent.totalConversations || 0,
+              avgResponseTime: agent.avgResponseTime ? parseFloat(agent.avgResponseTime) : 0,
+              sentimentScore: agent.satisfaction ? agent.satisfaction / 5 : 0,
+              averageHandlingTime: agent.avgResponseTime ? parseFloat(agent.avgResponseTime) * 60 : 0
+            };
+          });
+        }
+      }
       
       setAgents(transformedAgents);
       setLastUpdate(new Date());
+      setDataLoaded(true);
     } catch (err) {
       setError(err.message || 'Failed to fetch active agents');
       console.error('API Error:', err);
+      console.error('Error details:', {
+        message: err.message,
+        stack: err.stack,
+        response: err.response?.data
+      });
     } finally {
       setLoading(false);
     }
-  }, []); // Empty dependency array to prevent re-creation
+  }, [startDate, endDate]); // Include startDate and endDate in dependencies
 
   // Separate useEffect for initial setup and WebSocket
   useEffect(() => {
-    // Initial fetch
+    // Only fetch data if we haven't loaded it yet
+    if (!dataLoaded) {
     fetchActiveAgents();
+    }
     setLoading(false);
 
     // Set up WebSocket connection
@@ -102,16 +192,8 @@ const ActiveAgentsDashboard = () => {
       websocketService.off('performanceAlert', handlePerformanceAlert);
       websocketService.disconnect();
     };
-  }, []); // Empty dependency array for initial setup only
+  }, [dataLoaded]); // Include dataLoaded to prevent re-fetching
 
-  // Separate useEffect for polling
-  useEffect(() => {
-    if (isPollingPaused) return;
-
-    const interval = setInterval(fetchActiveAgents, pollingInterval);
-    
-    return () => clearInterval(interval);
-  }, [pollingInterval, isPollingPaused, fetchActiveAgents]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -126,18 +208,6 @@ const ActiveAgentsDashboard = () => {
     }
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'online':
-        return <div className="w-2 h-2 bg-success-500 rounded-full"></div>;
-      case 'busy':
-        return <div className="w-2 h-2 bg-warning-500 rounded-full"></div>;
-      case 'away':
-        return <div className="w-2 h-2 bg-gray-400 rounded-full"></div>;
-      default:
-        return <div className="w-2 h-2 bg-gray-400 rounded-full"></div>;
-    }
-  };
 
   const formatLastActivity = (date) => {
     const now = new Date();
@@ -152,9 +222,37 @@ const ActiveAgentsDashboard = () => {
     return `${days}d ago`;
   };
 
-  const onlineCount = agents.filter(agent => agent.status === 'online').length;
-  const busyCount = agents.filter(agent => agent.status === 'busy').length;
-  const awayCount = agents.filter(agent => agent.status === 'away').length;
+  const handleAgentClick = async (agent) => {
+    try {
+      console.log('🖱️ Agent clicked:', agent);
+      console.log('🖱️ Agent jomaxId:', agent.jomaxId);
+      console.log('🖱️ onAgentSelect function exists:', !!onAgentSelect);
+      
+      // Format dates as required by the server
+      const formattedEndDate = endDate + ' 23:59';
+      const formattedStartDate = startDate + ' 00:00';
+      
+      console.log('📅 Date range:', { formattedStartDate, formattedEndDate });
+      
+      // Call the API to get agent details
+      console.log('🔄 Calling getAgentById API...');
+      const agentDetails = await getAgentById(agent.jomaxId, formattedStartDate, formattedEndDate);
+      console.log('✅ Agent details received:', agentDetails);
+      
+      // Pass the agent details to the parent component
+      if (onAgentSelect) {
+        console.log('📤 Calling onAgentSelect with:', agentDetails);
+        onAgentSelect(agentDetails);
+      } else {
+        console.error('❌ onAgentSelect function not provided');
+      }
+    } catch (error) {
+      console.error('❌ Error fetching agent details:', error);
+      // Show error message instead of mock data
+      setError('Failed to fetch agent details. Please try again.');
+    }
+  };
+
 
   if (loading) {
     return (
@@ -176,6 +274,54 @@ const ActiveAgentsDashboard = () => {
             <h2 className="text-2xl font-bold text-gray-900">Active Agents Dashboard</h2>
             <p className="text-gray-600">Real-time agent performance monitoring</p>
           </div>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Calendar className="h-4 w-4 text-gray-400" />
+              <label className="text-sm font-medium text-gray-700">Date Range:</label>
+              <div className="flex items-center space-x-2">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Start Date</label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      // Auto-adjust end date if it's before start date
+                      if (new Date(e.target.value) > new Date(endDate)) {
+                        setEndDate(e.target.value);
+                      }
+                    }}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                    max={new Date().toISOString().split('T')[0]} // Can't select future dates
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">End Date</label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                    max={new Date().toISOString().split('T')[0]} // Can't select future dates
+                    min={startDate} // Can't select before start date
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    setDataLoaded(false);
+                    fetchActiveAgents();
+                  }}
+                  className="px-3 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 text-sm"
+                  disabled={loading}
+                >
+                  {loading ? 'Loading...' : 'Refresh'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Status Indicators */}
           <div className="flex items-center space-x-4">
             <div className="text-sm text-gray-500">
               Last updated: {lastUpdate.toLocaleTimeString()}
@@ -201,11 +347,10 @@ const ActiveAgentsDashboard = () => {
               <span className="text-sm text-gray-600">
                 Notifications {notificationsEnabled ? 'Enabled' : 'Disabled'}
               </span>
-            </div>
           </div>
         </div>
 
-        {/* Quick Stats */}
+        {/* Quick Stats - Based on API Response */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="metric-card">
             <div className="flex items-center">
@@ -219,30 +364,36 @@ const ActiveAgentsDashboard = () => {
 
           <div className="metric-card">
             <div className="flex items-center">
-              <div className="w-2 h-2 bg-success-500 rounded-full mr-3"></div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Online</p>
-                <p className="text-2xl font-semibold text-gray-900">{onlineCount}</p>
+              <MessageSquare className="h-8 w-8 text-blue-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-500">Total Interactions</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {agents.reduce((sum, agent) => sum + (agent.totalConversations || 0), 0)}
+                </p>
               </div>
             </div>
           </div>
 
           <div className="metric-card">
             <div className="flex items-center">
-              <div className="w-2 h-2 bg-warning-500 rounded-full mr-3"></div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Busy</p>
-                <p className="text-2xl font-semibold text-gray-900">{busyCount}</p>
+              <Clock className="h-8 w-8 text-green-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-500">Total Duration</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {Math.round(agents.reduce((sum, agent) => sum + (agent.averageHandlingTime || 0), 0) / 3600 * 100) / 100}h
+                </p>
               </div>
             </div>
           </div>
 
           <div className="metric-card">
             <div className="flex items-center">
-              <div className="w-2 h-2 bg-gray-400 rounded-full mr-3"></div>
-              <div>
-                <p className="text-sm font-medium text-gray-500">Away</p>
-                <p className="text-2xl font-semibold text-gray-900">{awayCount}</p>
+              <Star className="h-8 w-8 text-yellow-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-500">Avg Performance</p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {agents.length > 0 ? Math.round(agents.reduce((sum, agent) => sum + (agent.sentimentScore * 100 || 0), 0) / agents.length) : 0}/100
+                </p>
               </div>
             </div>
           </div>
@@ -250,7 +401,7 @@ const ActiveAgentsDashboard = () => {
       </div>
 
       {/* Error Message */}
-      {error && (
+      {/* {error && (
         <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
           <div className="flex">
             <AlertCircle className="h-5 w-5 text-danger-400" />
@@ -263,7 +414,7 @@ const ActiveAgentsDashboard = () => {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* No Data Message */}
       {!loading && !error && agents.length === 0 && (
@@ -275,6 +426,13 @@ const ActiveAgentsDashboard = () => {
               <div className="mt-2 text-sm text-gray-700">
                 No agents found for the selected date range. Try adjusting the date range or check the server connection.
               </div>
+              {process.env.NODE_ENV === 'development' && (
+                <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded">
+                  <p className="text-xs text-yellow-800 font-medium">Debug Info:</p>
+                  <p className="text-xs text-yellow-700">Check browser console for API response details</p>
+                  <p className="text-xs text-yellow-700">Expected API format: Array of objects with agentId, agentName, performanceStats, overallPerformanceScore</p>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -283,44 +441,11 @@ const ActiveAgentsDashboard = () => {
       {/* Agents Table */}
       <div className="card">
         <div className="flex items-center justify-between mb-4">
+          <div>
           <h3 className="text-lg font-semibold text-gray-900">Agent Status</h3>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => setIsPollingPaused(!isPollingPaused)}
-                className={`px-3 py-1 text-sm rounded ${
-                  isPollingPaused 
-                    ? 'bg-success-100 text-success-700 hover:bg-success-200' 
-                    : 'bg-danger-100 text-danger-700 hover:bg-danger-200'
-                }`}
-              >
-                {isPollingPaused ? '▶️ Resume' : '⏸️ Pause'}
-              </button>
-              <button
-                onClick={fetchActiveAgents}
-                className="px-3 py-1 text-sm bg-primary-100 text-primary-700 hover:bg-primary-200 rounded"
-                disabled={loading}
-              >
-                🔄 Refresh
-              </button>
-              <span className="text-xs text-gray-500">
-                {isPollingPaused ? 'Polling paused' : 'Polling active'}
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-600">Interval:</label>
-              <select
-                value={pollingInterval}
-                onChange={(e) => setPollingInterval(Number(e.target.value))}
-                className="text-sm border border-gray-300 rounded px-2 py-1"
-                disabled={isPollingPaused}
-              >
-                <option value={10000}>10s</option>
-                <option value={30000}>30s</option>
-                <option value={60000}>1m</option>
-                <option value={300000}>5m</option>
-              </select>
-            </div>
+            <p className="text-sm text-gray-500">
+              Click on any agent row to view performance details • Showing data from {new Date(startDate).toLocaleDateString()} to {new Date(endDate).toLocaleDateString()}
+            </p>
           </div>
         </div>
 
@@ -332,25 +457,27 @@ const ActiveAgentsDashboard = () => {
                   Agent
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  Total Interactions
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Current Conversations
+                  Total Duration
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Performance
+                  Performance Score
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Last Activity
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Platform
+                  Avg Response Time
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {agents.map((agent) => (
-                <tr key={agent.id} className="hover:bg-gray-50">
+                <tr 
+                  key={agent.id} 
+                  className="hover:bg-blue-50 cursor-pointer transition-colors border-l-4 border-transparent hover:border-blue-500"
+                  onClick={() => handleAgentClick(agent)}
+                  title="Click to view performance details"
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
@@ -362,41 +489,37 @@ const ActiveAgentsDashboard = () => {
                         <div className="text-sm font-medium text-gray-900">{agent.name}</div>
                         <div className="text-sm text-gray-500">{agent.jomaxId}</div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      {getStatusIcon(agent.status)}
-                      <span className={`ml-2 ${getStatusColor(agent.status)}`}>
-                        {agent.status.charAt(0).toUpperCase() + agent.status.slice(1)}
-                      </span>
+                      <div className="ml-auto">
+                        <div className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">
+                          View Details →
+                        </div>
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <MessageSquare className="h-4 w-4 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-900">{agent.currentConversations}</span>
+                      <span className="text-sm text-gray-900">{agent.totalConversations}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="space-y-1">
-                      <div className="flex items-center text-sm">
-                        <Clock className="h-4 w-4 text-gray-400 mr-1" />
-                        <span className="text-gray-600">{agent.avgResponseTime}m</span>
-                      </div>
-                      <div className="flex items-center text-sm">
-                        <Star className="h-4 w-4 text-warning-400 mr-1" />
-                        <span className="text-gray-600">{agent.satisfaction}/5</span>
-                      </div>
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 text-gray-400 mr-2" />
+                      <span className="text-sm text-gray-900">
+                        {Math.round(agent.averageHandlingTime / 3600 * 100) / 100}h
+                      </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatLastActivity(agent.lastActivity)}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <Star className="h-4 w-4 text-yellow-400 mr-2" />
+                      <span className="text-sm text-gray-900">{Math.round(agent.sentimentScore * 100)}/100</span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm text-gray-900">{agent.platform}</span>
-                      <span className="text-xs text-gray-500">({agent.channel})</span>
+                    <div className="flex items-center">
+                      <Clock className="h-4 w-4 text-gray-400 mr-2" />
+                      <span className="text-sm text-gray-900">{agent.avgResponseTime}m</span>
                     </div>
                   </td>
                 </tr>
@@ -406,78 +529,6 @@ const ActiveAgentsDashboard = () => {
         </div>
       </div>
 
-      {/* Performance Summary */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Performers</h3>
-          <div className="space-y-3">
-            {agents
-              .sort((a, b) => parseFloat(b.satisfaction) - parseFloat(a.satisfaction))
-              .slice(0, 3)
-              .map((agent, index) => (
-                <div key={agent.id} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center text-xs font-medium text-primary-600">
-                      {index + 1}
-                    </div>
-                    <div className="ml-3">
-                      <div className="text-sm font-medium text-gray-900">{agent.name}</div>
-                      <div className="text-xs text-gray-500">{agent.jomaxId}</div>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-600">{agent.satisfaction}/5</div>
-                </div>
-              ))}
-          </div>
-        </div>
-
-        <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Most Active</h3>
-          <div className="space-y-3">
-            {agents
-              .sort((a, b) => b.currentConversations - a.currentConversations)
-              .slice(0, 3)
-              .map((agent, index) => (
-                <div key={agent.id} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="w-6 h-6 rounded-full bg-success-100 flex items-center justify-center text-xs font-medium text-success-600">
-                      {index + 1}
-                    </div>
-                    <div className="ml-3">
-                      <div className="text-sm font-medium text-gray-900">{agent.name}</div>
-                      <div className="text-xs text-gray-500">{agent.jomaxId}</div>
-                    </div>
-                  </div>
-                  <div className="text-sm text-gray-600">{agent.currentConversations} active</div>
-                </div>
-              ))}
-          </div>
-        </div>
-
-        <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">System Health</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Online Rate</span>
-              <span className="text-sm font-medium text-gray-900">
-                {((onlineCount / agents.length) * 100).toFixed(1)}%
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Avg Response Time</span>
-              <span className="text-sm font-medium text-gray-900">
-                {(agents.reduce((sum, agent) => sum + parseFloat(agent.avgResponseTime), 0) / agents.length).toFixed(1)}m
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Avg Satisfaction</span>
-              <span className="text-sm font-medium text-gray-900">
-                {(agents.reduce((sum, agent) => sum + parseFloat(agent.satisfaction), 0) / agents.length).toFixed(1)}/5
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

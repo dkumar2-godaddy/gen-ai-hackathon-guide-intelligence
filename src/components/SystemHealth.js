@@ -6,84 +6,11 @@ const SystemHealth = () => {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState(new Date());
 
-  // Mock system health data
-  const generateSystemData = () => {
-    return {
-      overallHealth: 'healthy',
-      uptime: '99.9%',
-      responseTime: '245ms',
-      activeConnections: Math.floor(Math.random() * 1000) + 500,
-      cpuUsage: Math.floor(Math.random() * 30) + 20,
-      memoryUsage: Math.floor(Math.random() * 40) + 30,
-      diskUsage: Math.floor(Math.random() * 20) + 10,
-      networkLatency: Math.floor(Math.random() * 50) + 10,
-      services: [
-        {
-          name: 'MCP Server',
-          status: 'healthy',
-          uptime: '99.9%',
-          responseTime: '120ms',
-          lastCheck: new Date(Date.now() - Math.random() * 300000)
-        },
-        {
-          name: 'OAuth Service',
-          status: 'healthy',
-          uptime: '99.8%',
-          responseTime: '85ms',
-          lastCheck: new Date(Date.now() - Math.random() * 300000)
-        },
-        {
-          name: 'Conversation API',
-          status: 'warning',
-          uptime: '98.5%',
-          responseTime: '450ms',
-          lastCheck: new Date(Date.now() - Math.random() * 300000)
-        },
-        {
-          name: 'Database',
-          status: 'healthy',
-          uptime: '99.9%',
-          responseTime: '25ms',
-          lastCheck: new Date(Date.now() - Math.random() * 300000)
-        },
-        {
-          name: 'Cache Service',
-          status: 'healthy',
-          uptime: '99.7%',
-          responseTime: '15ms',
-          lastCheck: new Date(Date.now() - Math.random() * 300000)
-        }
-      ],
-      alerts: [
-        {
-          id: 1,
-          type: 'warning',
-          message: 'Conversation API response time is above threshold',
-          timestamp: new Date(Date.now() - 300000),
-          resolved: false
-        },
-        {
-          id: 2,
-          type: 'info',
-          message: 'Scheduled maintenance completed successfully',
-          timestamp: new Date(Date.now() - 3600000),
-          resolved: true
-        }
-      ],
-      metrics: {
-        totalRequests: 125000,
-        successfulRequests: 124500,
-        failedRequests: 500,
-        avgResponseTime: '245ms',
-        peakConcurrentUsers: 1250,
-        dataProcessed: '2.5TB'
-      }
-    };
-  };
 
   useEffect(() => {
     const fetchSystemData = () => {
-      setSystemData(generateSystemData());
+      // TODO: Implement real API call
+      setSystemData(null);
       setLastUpdate(new Date());
     };
 
